@@ -1,0 +1,148 @@
+SetLogFile("asst1-2.txt");
+load "MagmaProcedures.txt";
+load "asst1ciphertexts.txt";
+C:=SubstitutionCryptosystem();
+//find a best swap
+//(original key, cipher text)
+//return (new key)
+bestSwap:=function(key, ct)
+    maxScore:=Score(Enciphering(InverseKey(key), ct), Common);
+    maxKey:=Encoding(C, "ABCDEFGHIJKLMNOPQRSTUFWXYZ");
+    for i:=1 to 25 do
+        for j:=i+1 to 26 do
+		    key2:=key;
+            swap(alphabet[i], alphabet[j], ~key2);
+            newScore:=Score(Enciphering(InverseKey(key2), ct), Common);
+            if (newScore gt maxScore) then
+                maxScore:=newScore;
+                maxKey:=key2;
+            end if;
+        end for;
+    end for;
+    if (String(maxKey) ne "ABCDEFGHIJKLMNOPQRSTUFWXYZ") then
+        maxKey, maxScore;
+    else
+        "Finished!", maxScore;
+    end if;
+    return maxKey;
+end function;
+
+//find a best key by hill-climbing algorithm
+//(original key, cipher text)
+//return (new key)
+keyByHillClimbing:=function(key, ct)
+    key2:=key;
+    key3:="";
+    while (String(key2) ne "ABCDEFGHIJKLMNOPQRSTUFWXYZ") do
+        key3:=key2;
+        key2:=bestSwap(key3, ct);
+    end while;
+    return key3;
+end function;
+
+SortedFreqDist(sct1);
+SortedFreqDist(sct2);
+SortedFreqDist(sct3);
+//scr1 was enciphered using a Vigenere cipher
+//sct3 and sct2 were enciphered using simple substitution ciphers
+
+ct2:=Encoding(C, sct2);
+str2:=String(ct2);
+str2;
+for i:=1 to #sct2-2 do
+    if sct2[i] eq "O" and sct2[i+2] eq "I" then
+        print sct2[i..i+2];
+    end if;
+end for;
+for i:=1 to #sct2-2 do
+    if sct2[i] eq "U" and sct2[i+2] eq "I" then
+        print sct2[i..i+2];
+    end if;
+end for;
+for i:=1 to #sct2-2 do
+    if sct2[i] eq "H" and sct2[i+2] eq "I" then
+        print sct2[i..i+2];
+    end if;
+end for;
+fk2:=C!freqkey(ct2);
+fk2;
+swap("X","I",~fk2);
+swap("O","Q",~fk2);
+swap("S","H",~fk2);
+fk2;
+fk2i:=InverseKey(fk2);
+pt2:=Enciphering(fk2i, ct2);
+Score(pt2, Common);
+fk2:=keyByHillClimbing(fk2, ct2);
+Enciphering(InverseKey(fk2), ct2);
+//If the thoery of numbers could be employed for any pratical and ...
+//Got it!!!
+//output key for text 2
+fk2;
+
+ct3:=Encoding(C, sct3);
+str3:=String(ct3);
+SortedFreqDist(sct3);
+for i:=1 to #str3-2 do
+    if str3[i] eq "Q" and str3[i+2] eq "S" then
+        print str3[i..i+2];
+    end if;
+end for;
+fk3:=C!freqkey(str3);
+swap("B","Q",~fk3);
+swap("V","O",~fk3);
+swap("N","S",~fk3);
+fk3;
+
+//Q->T O->H S->E
+fk3:=keyByHillClimbing(fk3, ct3);
+Enciphering(InverseKey(fk3), ct3);
+//Still need some swaps
+//Help it jump out of the local maximum
+
+//Use word "THAT" ("QO?Q")
+for i:=1 to #str3-3 do
+    if  str3[i] eq "Q" and str3[i+1] eq "O" and str3[i+3] eq "Q" then
+        print str3[i..i+3];
+    end if;
+end for;
+//A is correct
+
+//Use word "HERE" or part of "WHERE" "THERE" ("OS?S")
+for i:=1 to #str3-3 do
+    if  str3[i] eq "O" and str3[i+1] eq "S" and str3[i+3] eq "S" then
+        print str3[i..i+3];
+    end if;
+end for;
+//W->R is correct;
+
+//Use word "WHERE" (?OSWS)
+for i:=1 to #str3-4 do
+    if  str3[i+1] eq "O" and str3[i+2] eq "S" and str3[i+3] eq "W" and str3[i+4] eq "S" then
+        print str3[i..i+4];
+    end if;
+end for;
+//Guess J->W
+swap("J","K",~fk3);
+fk3;
+Enciphering(InverseKey(fk3), ct3);
+
+//Use word "WHICH" (JO??O)
+for i:=1 to #str3-4 do
+    if  str3[i] eq "J" and str3[i+1] eq "O" and str3[i+4] eq "O" then
+        print str3[i..i+4];
+    end if;
+end for;
+//Guess V->I and P->C
+swap("G","V",~fk3);
+swap("P","R",~fk3);
+fk3;
+Enciphering(InverseKey(fk3), ct3);
+
+//Use hill-climbing once again
+fk3:=keyByHillClimbing(fk3, ct3);
+Enciphering(InverseKey(fk3), ct3);
+//The ingenious MR. Benjamin Robins F.R.S. has lately published new principles...
+//Got it!!!
+//output key for text 3
+fk3;

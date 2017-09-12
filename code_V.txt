@@ -1,0 +1,69 @@
+SetLogFile("asst1-3.txt");
+load "MagmaProcedures.txt";
+load "asst1ciphertexts.txt";
+
+SortedFreqDist(sct1);
+SortedFreqDist(sct2);
+SortedFreqDist(sct3);
+//scr1 was enciphered using a Vigenere cipher
+//sct3 and sct2 were enciphered using simple substitution ciphers
+
+replace:=procedure(~key,i,c);
+    sk:=[String(key)[i]: i in [1..#String(key)]];
+    sk[i]:=c;
+    key:=Parent(key)!&cat[sk[i]:i in [1..#String(key)]];
+end procedure;
+
+//find a best replace
+//(original key, cipher text, Crypt)
+//return (new key)
+bestReplace:=function(key, ct, C)
+    maxScore:=Score(Enciphering(InverseKey(key), ct), Common);
+    maxKey:=Encoding(C, "ABCDEFGHIJKLMNOPQRSTUFWXYZ");
+    for i:=1 to #String(key) do
+        for j:=1 to 26 do
+		    key2:=key;
+            replace(~key2,i,alphabet[j]);
+            newScore:=Score(Enciphering(InverseKey(key2), ct), Common);
+            if (newScore gt maxScore) then
+                maxScore:=newScore;
+                maxKey:=key2;
+            end if;
+        end for;
+    end for;
+    if (String(maxKey) ne "ABCDEFGHIJKLMNOPQRSTUFWXYZ") then
+        maxScore, maxKey;
+    else
+        maxScore, "Finished!";
+    end if;
+    return maxKey;
+end function;
+
+//find a best key by hill-climbing algorithm
+//(original key, cipher text, Crypt)
+//return (new key)
+keyByHillClimbing:=function(key, ct, C)
+    key2:=key;
+    key3:="";
+    while (String(key2) ne "ABCDEFGHIJKLMNOPQRSTUFWXYZ") do
+        key3:=key2;
+        key2:=bestReplace(key3, ct, C);
+    end while;
+    return key3;
+end function;
+
+for i:=2 to 20 do
+    print "Period:",i,"CI:",CoincidenceIndex(Decimation(sct1,1,i));
+end for;
+//Preiod 8 is the best one.
+SortedFreqDist(Decimation(sct1,1,8));
+C:=VigenereCryptosystem(8);
+k1:=C!"ABCDEFGH";
+for i:=1 to 8 do
+    t:=SortedFreqDist(Decimation(sct1,i,8))[1];
+    replace(~k1, i, alphabet[(Index(alphabet, t[2])+21) mod 26 +1]);
+end for;
+k1;
+ct1:=Encoding(C,sct1);
+k1:=keyByHillClimbing(k1, ct1, C);
+Enciphering(InverseKey(k1),ct1);
